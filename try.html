@@ -94,8 +94,8 @@
 				.style("background", "#ace0f9");
 
 			drawBackground();
-			drawCloseTree();
 			drawFarTree();
+			drawCloseTree();
 			drawGrass();
 			drawCloud();
 		}
@@ -111,27 +111,11 @@
 				.attr("d", farMount1)
 				.attr("transform", "translate(0,493.21) scale(2)")
 				.style("fill", "#659999");
-			d3.select("svg")
-				.append("path")
-				.attr("d", hill1)
-				.attr("transform", "translate(0,553.21) scale(2)")
-				.style("fill", "url(#grad1)");
-			d3.select("svg")
-				.append("polygon")
-				.attr("points", point1)
-				.attr("transform", "translate(900,780) scale(2)")
-				.style("fill", "#7ebe00");
-			d3.select("svg")
-				.append("path")
-				.attr("d", path1)
-				.attr("transform", "translate(0,753.46) scale(2)")
-				.style("fill", "#7ed321");
-
 		}
 
 		/* modified D3 Tree */
 		/* Copyright 2013 Peter Cook (@prcweb); Licensed MIT */
-		function drawCloseTree(svg) {
+		function drawCloseTree() {
 			branches = [];
 			branch(seed1);
 			d3.select("svg")
@@ -167,10 +151,10 @@
 				.data(branches)
 				.enter()
 				.append('circle')
-				.attr('x2', function(d) {
+				.attr('cx', function(d) {
 					return endPt(d).x;
 				})
-				.attr('y2', function(d) {
+				.attr('cy', function(d) {
 					return endPt(d).y;
 				})
 				.attr('r', 2)
@@ -186,6 +170,11 @@
 			farTree1([480, 717]);
 			farTree1([500, 727]);
 			farTree1([700, 747]);
+			d3.select("svg")
+				.append("path")
+				.attr("d", hill1)
+				.attr("transform", "translate(0,553.21) scale(2)")
+				.style("fill", "url(#grad1)");
 		}
 
 		function drawGrass() {
@@ -197,6 +186,16 @@
 			grass1([625, 800.46, 15]);
 			grass1([745, 835.46, 20]);
 			grass1([865, 875.46, 30]);
+			d3.select("svg")
+				.append("polygon")
+				.attr("points", point1)
+				.attr("transform", "translate(900,780) scale(2)")
+				.style("fill", "#7ebe00");
+			d3.select("svg")
+				.append("path")
+				.attr("d", path1)
+				.attr("transform", "translate(0,753.46) scale(2)")
+				.style("fill", "#7ed321");
 		}
 
 		function drawCloud() {
