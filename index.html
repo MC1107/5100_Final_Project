@@ -110,7 +110,7 @@
 
 		<div class="slidecontainer">
 			<p><br><br></p>
-			<input type="range" min="0" max="11" value="0" class="slider" id="myRange" ,>
+			<input type="range" min="0" max="365" value="0" class="slider" id="myRange" ,>
 		</div>
 
 
@@ -188,9 +188,9 @@
 
 
 			d3.queue()
-				.defer(d3.csv, "./data-by-month/humidity.csv")
-				.defer(d3.csv, "./data-by-month/wind_speed.csv")
-				.defer(d3.csv, "./data-by-month/temperature.csv")
+				.defer(d3.csv, "./data-by-date/humidity.csv")
+				.defer(d3.csv, "./data-by-date/wind_speed.csv")
+				.defer(d3.csv, "./data-by-date/temperature.csv")
 				.await(callback)
 
 
@@ -245,6 +245,7 @@
 					.style("fill", "url(#grad1)");
 
 				// draw the close big tree
+				/* Copyright 2013 Peter Cook (@prcweb); Licensed MIT */
 				branches = [];
 				branch(seed1);
 				d3.select("svg")
@@ -295,16 +296,14 @@
 					.style("fill", "#7ed321");
 			}
 
-			/* modified D3 Tree */
-			/* Copyright 2013 Peter Cook (@prcweb); Licensed MIT */
-			function updateCloseTree(month, temp) {
+			function updateCloseTree(date, temp) {
 				var currentCircles = d3.select("#tree1").selectAll("circle").data(branches)
 				var addedCircles = currentCircles
 					.enter()
 					.append("circle");
 				var mergedCircles = addedCircles.merge(currentCircles);
 				mergedCircles
-					.attr("r", temp[month]['New York'] / 60)
+					.attr("r", temp[date]['New York'] / 60)
 					.attr("cx", function(d) {
 						return endPt(d).x;
 					})
@@ -312,7 +311,7 @@
 						return endPt(d).y;
 					})
 					.style("fill", "#417505")
-					.style("opacity", temp[month]['New York'] / 303);
+					.style("opacity", temp[date]['New York'] / 303);
 			}
 
 			function updateFarTree() {
@@ -445,19 +444,9 @@
 					.style("fill", "#fafafa");
 			}
 
-
-
-
-
-			// cityDropdown.onclick = function() {
-			// 	console.log(cityDropdown.value);
-			// 	drawFarTree(cityDropdown.value);
-			// }
-
 			function myFunction() {
 				document.getElementById("myDropdown").classList.toggle("show");
 			}
-
 
 			window.onclick = function(event) {
 				if (!event.target.matches('.dropbtn')) {
