@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+<html>
 <head>
 	<meta charset="utf-8">
 	<title>D3 Tree</title>
@@ -7,6 +7,7 @@
 
 	<style>
 		body {
+			margin:0;
 			font-family: "Helvetica Neue", Helvetica, sans-serif;
 			width: 100vw;
 			height: 100vh;
@@ -82,7 +83,7 @@
 			.defer(d3.csv, "./data/humidity.csv")
 			.defer(d3.csv, "./data/wind_speed.csv")
 			.defer(d3.csv, "./data/temperature.csv")
-			.await(callback)
+			.await(callback);
 
 
 		/* call back function */
@@ -94,8 +95,8 @@
 				.style("background", "#ace0f9");
 
 			drawBackground();
-			drawFarTree();
 			drawCloseTree();
+			drawFarTree();
 			drawGrass();
 			drawCloud();
 		}
@@ -111,11 +112,27 @@
 				.attr("d", farMount1)
 				.attr("transform", "translate(0,493.21) scale(2)")
 				.style("fill", "#659999");
+			d3.select("svg")
+				.append("path")
+				.attr("d", hill1)
+				.attr("transform", "translate(0,553.21) scale(2)")
+				.style("fill", "url(#grad1)");
+			d3.select("svg")
+				.append("polygon")
+				.attr("points", point1)
+				.attr("transform", "translate(900,780) scale(2)")
+				.style("fill", "#7ebe00");
+			d3.select("svg")
+				.append("path")
+				.attr("d", path1)
+				.attr("transform", "translate(0,753.46) scale(2)")
+				.style("fill", "#7ed321");
+
 		}
 
 		/* modified D3 Tree */
 		/* Copyright 2013 Peter Cook (@prcweb); Licensed MIT */
-		function drawCloseTree() {
+		function drawCloseTree(svg) {
 			branches = [];
 			branch(seed1);
 			d3.select("svg")
@@ -143,7 +160,7 @@
 				})
 				.attr('id', function(d) {
 					return 'id-' + d.i;
-				})
+				});
 
 
 			d3.select("#tree1")
@@ -170,11 +187,6 @@
 			farTree1([480, 717]);
 			farTree1([500, 727]);
 			farTree1([700, 747]);
-			d3.select("svg")
-				.append("path")
-				.attr("d", hill1)
-				.attr("transform", "translate(0,553.21) scale(2)")
-				.style("fill", "url(#grad1)");
 		}
 
 		function drawGrass() {
@@ -186,21 +198,48 @@
 			grass1([625, 800.46, 15]);
 			grass1([745, 835.46, 20]);
 			grass1([865, 875.46, 30]);
-			d3.select("svg")
-				.append("polygon")
-				.attr("points", point1)
-				.attr("transform", "translate(900,780) scale(2)")
-				.style("fill", "#7ebe00");
-			d3.select("svg")
-				.append("path")
-				.attr("d", path1)
-				.attr("transform", "translate(0,753.46) scale(2)")
-				.style("fill", "#7ed321");
 		}
 
 		function drawCloud() {
-			cloud1([100, 200]);
-			cloud1([500, 150]);
+//			cloud1([100, 200]);
+//			cloud1([500, 150]);
+			var initialCloudList=[];
+				for(var c=0;c<2;c++){
+				    var initialCloudX=Math.random()*(600-200)+200;
+				    var initialCloudy=Math.random()*(200-100)+100;
+				    cloud1([initialCloudX,initialCloudy,c]);
+				    initialCloudList.push([initialCloudX,initialCloudy]);
+				}
+
+				var j=initialCloudList[0][0];
+				var k=initialCloudList[1][0];
+				function loop(){
+					d3.select("#c0")
+						.attr("transform",function(){
+							if(d3.select(this).node().getBoundingClientRect().x<width){
+								j=j+1;
+//									console.log(initialCloudList[f]);
+								return "translate("+j+","+initialCloudList[0][1]+")"
+							}
+							else{
+								j=0;
+								d3.select(this).node().getBoundingClientRect().x=initialCloudList[0][0];
+							}
+						});
+					d3.select("#c1")
+						.attr("transform",function(){
+							if(d3.select(this).node().getBoundingClientRect().x<width){
+								k=k+1;
+//									console.log(initialCloudList[f]);
+								return "translate("+k+","+initialCloudList[1][1]+")"
+							}
+							else{
+								k=0;
+								d3.select(this).node().getBoundingClientRect().x=initialCloudList[1][0];
+							}
+						});
+				}
+				d3.timer(loop);
 		}
 
 		// Tree creation functions
@@ -278,6 +317,7 @@
 			d3.select("svg")
 				.append("path")
 				.attr("class", "cloud")
+				.attr("id","c"+root[2])
 				.attr("d", cloud)
 				.attr("transform", "translate(" + root[0] + "," + root[1] + ")")
 				.style("fill", "#fafafa");
