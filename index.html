@@ -118,7 +118,7 @@
 		<p><br><br></p>
 
 		<div class="dropdown">
-			<button onclick="myFunction()" class="dropbtn">Cities</button>
+			<button id="myButton" onclick="myFunction()" class="dropbtn">Cities</button>
 			<select id="myDropdown" class="dropdown-content">
 				<option value="San Francisco">San Francisco</option>
 				<option value="Denver">Denver</option>
@@ -128,7 +128,6 @@
 				<option value="Miami">Miami</option>
 				<option value="Toronto">Toronto</option>
 				<option value="New York">New York</option>
-
 			</select>
 		</div>
 
@@ -180,12 +179,37 @@
 			var dl = 0.8; // Length delta (factor)
 			var ar = 0.7; // Randomness
 			var maxDepth = 10;
-			var humidity;
-			var wind;
-			var temp;
-			var seasonSlider = document.getElementById("myRange");
+			var city = 'New York';
+			var date = 0;
+			var dateSlider = document.getElementById("myRange");
 			var cityDropdown = document.getElementById("myDropdown");
+			var cityButton = document.getElementById("myButton");
 
+
+			var leafColors = ["D46A6A", "D46A6A", "55AA55", "88CC88", "116611", "004400", "C3CF68", "FFCF31", "FFC131", "936000", "A2834A", "ECD3A5", "FFEFD2", "FFEFD2"]
+			var treeLocations = [
+				[110, 575],
+				[180, 565],
+				[350, 610],
+				[400, 655],
+				[480, 720],
+				[550, 740],
+				[700, 745],
+				[720, 740],
+				[1300, 670],
+				[1350, 660]
+			];
+			var grassLocations = [
+				[0, 733.46, 0],
+				[128, 733.46, 5],
+				[252, 743.46, 7],
+				[376, 760.46, 7],
+				[500, 780.46, 7],
+				[625, 800.46, 15],
+				[745, 835.46, 20],
+				[865, 875.46, 30]
+			];
+			var farTreeGroup;
 
 			d3.queue()
 				.defer(d3.csv, "./data-by-date/humidity.csv")
@@ -194,24 +218,37 @@
 				.await(callback)
 
 
+
 			/* call back function */
 			function callback(error, humidity, wind, temp) {
-				console.log(wind)
+				console.log(humidity)
 				var svg = d3.select("svg")
 					.attr("width", width)
 					.attr("height", height)
 					.style("background", "#ace0f9");
 
-				seasonSlider.oninput = function() {
+				drawBackground();
+
+				dateSlider.oninput = function() {
 					//console.log(seasonSlider.value)
-					updateCloseTree(seasonSlider.value, temp);
+					date = dateSlider.value;
+					//updateFarTree(city, humidity);
+					updateCloseTree(city, date, temp);
+					//updateGrass();
+					//updateCloud();
+				}
+				cityDropdown.onchange = function() {
+					console.log(cityDropdown.value)
+					city = cityDropdown.value;
+					updateFarTree(city, humidity);
+					//updateCloseTree(city, date, temp);
+					updateGrass();
+					//updateCloud();
 				}
 
-				drawBackground();
-				updateFarTree();
-				updateCloseTree(0, temp);
-				updateGrass();
-				updateCloud();
+
+
+
 			}
 
 			function drawBackground() {
@@ -228,16 +265,11 @@
 					.attr("transform", "translate(0,493.21) scale(2)")
 					.style("fill", "#659999");
 
+				//draw far trees
+				for (var i = 0; i < treeLocations.length; i++) {
+					farTree1(treeLocations[i], i);
+				}
 
-
-				// draw far trees
-				farTree1([108, 572]);
-				farTree1([182, 562]);
-				farTree1([350, 607]);
-				farTree1([400, 647]);
-				farTree1([480, 717]);
-				farTree1([500, 727]);
-				farTree1([700, 747]);
 				d3.select("svg")
 					.append("path")
 					.attr("d", hill1)
@@ -276,14 +308,9 @@
 					})
 
 				// draw grasses
-				grass1([0, 733.46, 0]);
-				grass1([128, 733.46, 5]);
-				grass1([252, 743.46, 7]);
-				grass1([376, 760.46, 7]);
-				grass1([500, 780.46, 7]);
-				grass1([625, 800.46, 15]);
-				grass1([745, 835.46, 20]);
-				grass1([865, 875.46, 30]);
+				for (var i = 0; i < grassLocations.length; i++) {
+					grass1(grassLocations[i]);
+				}
 				d3.select("svg")
 					.append("polygon")
 					.attr("points", point1)
@@ -296,35 +323,68 @@
 					.style("fill", "#7ed321");
 			}
 
-			function updateCloseTree(date, temp) {
+			function updateCloseTree(city, date, temp) {
+				// change the leaf size and color according to the temperature level for each city
+				console.log(city);
 				var currentCircles = d3.select("#tree1").selectAll("circle").data(branches)
 				var addedCircles = currentCircles
 					.enter()
 					.append("circle");
 				var mergedCircles = addedCircles.merge(currentCircles);
 				mergedCircles
-					.attr("r", temp[date]['New York'] / 60)
+					.attr("r", temp[date][city] / 60)
 					.attr("cx", function(d) {
 						return endPt(d).x;
 					})
 					.attr("cy", function(d) {
 						return endPt(d).y;
 					})
-					.style("fill", "#417505")
-					.style("opacity", temp[date]['New York'] / 303);
+					//.style("fill", leafColors[Math.ceil(date / 30)])
+					.style("fill", function(d) {
+						if (Math.round(Math.random())) {
+							return leafColors[Math.ceil(date / 30)];
+						} else {
+							return "green";
+						}
+					})
+					.style("opacity", temp[date][city] / 303);
+
+
 			}
 
-			function updateFarTree() {
+			function updateFarTree(city, humidity) {
+				// change number of trees according to different humidity level in different cities
+				var num = Math.ceil(humidity[0][city] / 10);
+				console.log(num)
 
+				for (var i = 0; i < 10; i++) {
+					d3.select("#farTree" + i)
+						.selectAll('path')
+						.attr("opacity", 1)
+				}
+
+				for (var i = 0; i < 10 - num; i++) {
+					removeNum = Math.floor(Math.random() * 10);
+					d3.select("#farTree" + removeNum)
+						.selectAll('path')
+						.attr("opacity", 0)
+				}
+
+
+
+				// var newLocations = treeLocations.splice(Math.floor(Math.random() * treeLocations.length), 2);
+				// for (var i = 0; i < newLocations.length; i++) {
+				// 	farTree1(newLocations[i]);
+				// }
 
 			}
 
 			function updateGrass() {
 
+
 			}
 
 			function updateCloud() {
-
 				var initialCloudList = [];
 				for (var c = 0; c < 2; c++) {
 					var initialCloudX = Math.random() * (600 - 200) + 200;
@@ -410,10 +470,11 @@
 				};
 			}
 
-			function farTree1(root) {
-				var farTreeGroup = d3.select("svg")
+			function farTree1(root, id) {
+				farTreeGroup = d3.select("svg")
 					.append("g")
-					.attr("class", "fartree");
+					.attr("class", "fartree")
+					.attr("id", "farTree" + id);
 				farTreeGroup
 					.append("path")
 					.attr("d", "M " + root[0] + " " + root[1] + " L " + root[0] + " " + (root[1] - 10))
@@ -449,15 +510,13 @@
 			}
 
 			window.onclick = function(event) {
-				if (!event.target.matches('.dropbtn')) {
-
+				if (!event.target.matches('.dropbtn') && !event.target.matches('.dropdown-content')) {
 					var dropdowns = document.getElementsByClassName("dropdown-content");
 					//console.log(dropdowns)
 					var i;
 					for (i = 0; i < dropdowns.length; i++) {
 						var openDropdown = dropdowns[i];
 						if (openDropdown.classList.contains('show')) {
-							console.log(i)
 							openDropdown.classList.remove('show');
 						}
 					}
