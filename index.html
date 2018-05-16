@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>D3 Tree</title>
@@ -109,17 +110,14 @@
 
 		<div class="slidecontainer">
 			<!--<p><br><br></p>-->
-			<!--<input type="range" min="0" max="366" value="0" class="slider" id="myRange">-->
+			<!--<input type="range" min="0" max="365" value="0" class="slider" id="myRange" ,>-->
 		</div>
-		<div class="textInput">
-			<input type="text" value="0" class="textInput" id="myText" >
-			<input type="button" value="click" id="button"/>
-		</div>
+
 
 		<!-- <h2>Dropdown</h2> -->
 
 		<div class="dropdown">
-			<button onclick="myFunction()" class="dropbtn">Cities</button>
+			<button id="myButton" onclick="myFunction()" class="dropbtn">Cities</button>
 			<select id="myDropdown" class="dropdown-content">
 				<option value="San Francisco">San Francisco</option>
 				<option value="Denver">Denver</option>
@@ -129,7 +127,6 @@
 				<option value="Miami">Miami</option>
 				<option value="Toronto">Toronto</option>
 				<option value="New York">New York</option>
-
 			</select>
 		</div>
 
@@ -181,15 +178,13 @@
 			var dl = 0.8; // Length delta (factor)
 			var ar = 0.7; // Randomness
 			var maxDepth = 10;
-			var humidity;
-			var wind;
-			var temp;
-//			var seasonSlider = document.getElementById("myRange");
-			var textInput=document.getElementById("myText");
-			var button=document.getElementById("button");
+			var city = 'New York';
+			var date = 0;
+//			var dateSlider = document.getElementById("myRange");
 			var cityDropdown = document.getElementById("myDropdown");
-			var sliderContainer=d3.select(".slidecontainer").append("svg").attr('width', 400).attr("height",100);
-			var NormValue = 0/365; // value normalized between 0-1
+			var cityButton = document.getElementById("myButton");
+			var sliderContainer=d3.select(".slidecontainer").append("svg").attr('width', 400).attr("height",50).attr("transform","translate(50,0)");
+			var NormValue = 7/365; // value normalized between 0-1
     		var selectedValue;
 			var valueLine = sliderContainer.append("line")
             .attr("x1", 0)
@@ -210,6 +205,39 @@
 					.style("stroke-linecap", "round")
 					.style("stroke-width", 6);
 			var valueCircle = sliderContainer.append("circle");
+
+			var leafColors = ["D46A6A", "D46A6A", "55AA55", "88CC88", "116611", "004400", "C3CF68", "FFCF31", "FFC131", "936000", "A2834A", "ECD3A5", "FFEFD2", "FFEFD2"];
+			var treeLocations = [
+				[110, 575],
+				[180, 565],
+				[210,595],
+				[275,625],
+				[350, 610],
+//				[380,643],
+				[400, 655],
+				[440,690],
+				[480, 720],
+//				[520,738],
+				[550, 740],
+				[620,743],
+				[700, 745],
+				[720, 740],
+				[800,740],
+				[1300, 670],
+				[1350, 660]
+			];
+			var grassLocations = [
+				[0, 733.46, 0],
+				[128, 733.46, 5],
+				[252, 743.46, 7],
+				[376, 760.46, 7],
+				[500, 780.46, 7],
+				[625, 800.46, 15],
+				[745, 835.46, 20],
+				[865, 875.46, 30]
+			];
+			var farTreeGroup;
+
 			d3.queue()
 				.defer(d3.csv, "./data-by-date/humidity.csv")
 				.defer(d3.csv, "./data-by-date/wind_speed.csv")
@@ -217,30 +245,92 @@
 				.await(callback);
 
 
+
 			/* call back function */
 			function callback(error, humidity, wind, temp) {
-//				console.log(wind);
-				var svg = d3.select(".canvas")
+				var svg = d3.select("svg.canvas")
 					.attr("width", width)
 					.attr("height", height)
 					.style("background", "#ace0f9");
 
+				drawBackground("San Francisco",0,temp);
 
-				drawBackground();
-				updateFarTree();
-				updateCloseTree(0, temp);
-				updateGrass();
-				updateCloud(0,wind);
-//				seasonSlider.oninput = function() {
-//				    var fl=0;
-//					//console.log(seasonSlider.value)
-////					updateCloseTree(seasonSlider.value, temp);
-//					updateCrloud(+seasonSlider.value, wind,fl);
-//				};
+				cityDropdown.onchange = function() {
+//					console.log(cityDropdown.value);
+					city = cityDropdown.value;
+					updateFarTree(city, humidity);
+					//updateCloseTree(city, date, temp);
+					updateGrass();
+					//updateCloud();
+				};
+				updateCloud("San Francisco",0,wind);
+				function updateCloud(city,day,wind) {
+					var j = initialCloudList[0][0];
+					var k = initialCloudList[1][0];
+
+					function loop() {
+						d3.select("#c0")
+							.attr("transform", function() {
+								if (d3.select(this).node().getBoundingClientRect().x < width) {
+									j = j + Number(wind[day][city]);
+									console.log(Number(wind[day][city]));
+									return "translate(" + j + "," + initialCloudList[0][1] + ")"
+								} else {
+									j = 0;
+									d3.select(this).node().getBoundingClientRect().x = initialCloudList[0][0];
+								}
+							});
+						d3.select("#c1")
+							.attr("transform", function() {
+								if (d3.select(this).node().getBoundingClientRect().x < width) {
+									k = k + Number(wind[day][city]);
+									return "translate(" + k + "," + initialCloudList[1][1] + ")"
+								} else {
+									k = 0;
+									d3.select(this).node().getBoundingClientRect().x = initialCloudList[1][0];
+								}
+							});
+					}
+					var t=d3.timer(loop);
+					d3.selectAll(".cloud")
+						.on("mouseover",function(){t.stop();})
+						.on("mouseout",function(){t.restart(loop);});
+
+				function dragEnded() {
+					selectedValue = d3.event.x;
+					date = selectedValue;
+				    updateCloseTree(city, date, temp);
+					if (selectedValue < 0)
+						selectedValue = 0;
+					else if (selectedValue > 365)
+						selectedValue = 365;
+
+					NormValue = selectedValue / 365;
+					valueCircle.attr("cx", selectedValue);
+					valueLine.attr("x2", 365 * NormValue);
+					emptyLine.attr("x1", 365 * NormValue);
+
+					d3.event.sourceEvent.stopPropagation();
+					t.stop();
+				}
+
+				//Draggable circle to represent the current value
+						valueCircle
+						.attr("cx", 365 * NormValue)
+						.attr("cy", 20)
+						.attr("r", 6)
+						.style("stroke", "black")
+						.style("stroke-width", 1)
+						.style("fill", "#ffffff")
+						.call(d3.drag().on("drag", dragEnded).on("end",function(){console.log("end");updateCloud(city,selectedValue,wind)}));
+
+				}
+
 
 			}
-			function drawBackground() {
 
+			function drawBackground(city, date, temp) {
+				var leftSlopeScale=d3.scaleQuantize().domain([245,310]).range(["#fafafa","#F95426","#F95426","#F9F047","#D4FC79","#96E6A1","#11D850"]);
 				// draw mountains
 				d3.select("svg.canvas")
 					.append("path")
@@ -253,16 +343,11 @@
 					.attr("transform", "translate(0,493.21) scale(2)")
 					.style("fill", "#659999");
 
+				//draw far trees
+				for (var i = 0; i < treeLocations.length; i++) {
+					farTree1(treeLocations[i], i);
+				}
 
-
-				// draw far trees
-				farTree1([108, 572]);
-				farTree1([182, 568]);
-				farTree1([350, 607]);
-				farTree1([400, 657]);
-				farTree1([480, 719]);
-				farTree1([500, 729]);
-				farTree1([700, 747]);
 				d3.select("svg.canvas")
 					.append("path")
 					.attr("d", hill1)
@@ -270,6 +355,7 @@
 					.style("fill", "url(#grad1)");
 
 				// draw the close big tree
+				/* Copyright 2013 Peter Cook (@prcweb); Licensed MIT */
 				branches = [];
 				branch(seed1);
 				d3.select("svg.canvas")
@@ -300,59 +386,88 @@
 					});
 
 				// draw grasses
-				grass1([0, 733.46, 0]);
-				grass1([128, 733.46, 5]);
-				grass1([252, 743.46, 7]);
-				grass1([376, 760.46, 7]);
-				grass1([500, 780.46, 7]);
-				grass1([625, 800.46, 15]);
-				grass1([745, 835.46, 20]);
-				grass1([865, 875.46, 30]);
+				for (var i = 0; i < grassLocations.length; i++) {
+					grass1(grassLocations[i],city, date, temp);
+				}
 				d3.select("svg.canvas")
 					.append("polygon")
 					.attr("points", point1)
+					.attr("class","rightslope")
 					.attr("transform", "translate(900,780) scale(2)")
 					.style("fill", "#7ebe00");
 				d3.select("svg.canvas")
 					.append("path")
 					.attr("d", path1)
+					.attr("class","leftslope")
 					.attr("transform", "translate(0,753.46) scale(2)")
-					.style("fill", "#7ed321");
+//					.style("fill", "#7ed321");
+					.style("fill", leftSlopeScale(temp[date][city]));
 			}
 
-			/* modified D3 Tree */
-			/* Copyright 2013 Peter Cook (@prcweb); Licensed MIT */
-			function updateCloseTree(day, temp){
-//			    console.log(temp[day]);
+			function updateCloseTree(city, date, temp) {
+			    var leafScale=d3.scaleQuantize().domain([245,310]).range([0.3,0.7,1,2,4]);
+				// change the leaf size and color according to the temperature level for each city
+//				console.log(date);
 				var currentCircles = d3.select("#tree1").selectAll("circle").data(branches);
 				var addedCircles = currentCircles
 					.enter()
 					.append("circle");
 				var mergedCircles = addedCircles.merge(currentCircles);
 				mergedCircles
-					.attr("r", 2)
+					.attr("r", leafScale(temp[date][city]))
 					.attr("cx", function(d) {
 						return endPt(d).x;
 					})
 					.attr("cy", function(d) {
 						return endPt(d).y;
 					})
-					.style("fill", "#417505");
+					//.style("fill", leafColors[Math.ceil(date / 30)])
+					.style("fill", function(d) {
+						if (Math.round(Math.random())) {
+							return leafColors[Math.ceil(date / 30)];
+						} else {
+							return "green";
+						}
+					})
+					.style("opacity", temp[date][city] / 303);
+
+
 			}
 
-			function updateFarTree() {
+			function updateFarTree(city, humidity) {
+				// change number of trees according to different humidity level in different cities
+				var num = Math.ceil(humidity[0][city] / 10);
+				console.log(num);
 
+				for (var i = 0; i < 15; i++) {
+					d3.select("#farTree" + i)
+						.selectAll('path')
+						.attr("opacity", 1)
+				}
+
+				for (var i = 0; i < 15 - num; i++) {
+					removeNum = Math.floor(Math.random() * 10);
+					d3.select("#farTree" + removeNum)
+						.selectAll('path')
+						.attr("opacity", 0)
+				}
+
+
+
+				// var newLocations = treeLocations.splice(Math.floor(Math.random() * treeLocations.length), 2);
+				// for (var i = 0; i < newLocations.length; i++) {
+				// 	farTree1(newLocations[i]);
+				// }
 
 			}
 
 			function updateGrass() {
 
+
 			}
 			var initialCloudList = [];
 			function drawCloud(){
-
 				for (var c = 0; c < 2; c++) {
-
 					var initialCloudX = Math.random() * (600 - 200) + 200;
 					var initialCloudy = Math.random() * (200 - 100) + 100;
 					cloud1([initialCloudX, initialCloudy, c]);
@@ -360,80 +475,6 @@
 				}
 			}
 			drawCloud();
-//			console.log(d3.select("#c0").node().getBoundingClientRect());
-			function updateCloud(day,wind) {
-//			    console.log(Number(wind[day]["New York"]));
-//				var initialCloudList = [];
-//				for (var c = 0; c < 2; c++) {
-//					var initialCloudX = Math.random() * (600 - 200) + 200;
-//					var initialCloudy = Math.random() * (200 - 100) + 100;
-//					cloud1([initialCloudX, initialCloudy, c]);
-//					initialCloudList.push([initialCloudX, initialCloudy]);
-//				}
-				var j = initialCloudList[0][0];
-				var k = initialCloudList[1][0];
-
-				function loop() {
-					d3.select("#c0")
-						.attr("transform", function() {
-							if (d3.select(this).node().getBoundingClientRect().x < width) {
-//								j = j + 1;
-								j = j + Number(wind[day]["New York"]);
-								console.log(wind[day]["New York"]);
-//								console.log(j);
-								return "translate(" + j + "," + initialCloudList[0][1] + ")"
-							} else {
-								j = 0;
-								d3.select(this).node().getBoundingClientRect().x = initialCloudList[0][0];
-							}
-						});
-					d3.select("#c1")
-						.attr("transform", function() {
-							if (d3.select(this).node().getBoundingClientRect().x < width) {
-//								k=k+1;
-							    k = k + Number(wind[day]["New York"]);
-								//console.log(initialCloudList[f]);
-								return "translate(" + k + "," + initialCloudList[1][1] + ")"
-							} else {
-								k = 0;
-								d3.select(this).node().getBoundingClientRect().x = initialCloudList[1][0];
-							}
-						});
-				}
-				var t=d3.timer(loop);
-				d3.selectAll(".cloud")
-					.on("mouseover",function(){t.stop();});
-//					.on("mouseout",function(){t.restart(loop);})
-
-			function dragEnded() {
-			    console.log("drag");
-				selectedValue = d3.event.x;
-
-				if (selectedValue < 0)
-					selectedValue = 0;
-				else if (selectedValue > 365)
-					selectedValue = 365;
-
-				NormValue = selectedValue / 365;
-				valueCircle.attr("cx", selectedValue);
-				valueLine.attr("x2", 365 * NormValue);
-				emptyLine.attr("x1", 365 * NormValue);
-
-				d3.event.sourceEvent.stopPropagation();
-				t.stop();
-			}
-
-			//Draggable circle to represent the current value
-			    	valueCircle
-					.attr("cx", 365 * NormValue)
-					.attr("cy", 20)
-					.attr("r", 6)
-					.style("stroke", "black")
-					.style("stroke-width", 1)
-					.style("fill", "#ffffff")
-					.call(d3.drag().on("drag", dragEnded).on("end",function(){console.log("end");updateCloud(selectedValue,wind)}));
-
-			}
 
 			// Tree creation functions
 			function branch(b) {
@@ -482,10 +523,11 @@
 				};
 			}
 
-			function farTree1(root) {
-				var farTreeGroup = d3.select("svg.canvas")
+			function farTree1(root, id) {
+				farTreeGroup = d3.select("svg.canvas")
 					.append("g")
-					.attr("class", "fartree");
+					.attr("class", "fartree")
+					.attr("id", "farTree" + id);
 				farTreeGroup
 					.append("path")
 					.attr("d", "M " + root[0] + " " + root[1] + " L " + root[0] + " " + (root[1] - 10))
@@ -497,17 +539,20 @@
 					.style("fill", "green");
 			}
 
-			function grass1(root) {
+			function grass1(root,city, date, temp) {
+			    var leftSlopeScale=d3.scaleQuantize().domain([245,310]).range(["#fafafa","#F95426","#F95426","#F9F047","#D4FC79","#96E6A1","#11D850"]);
 				d3.select("svg.canvas")
 					.append("path")
 					.attr("class", "grass")
 					.attr("d", grass)
 					.attr("transform", "rotate(" + root[2] + "," + root[0] + "," + root[1] + ") translate(" + root[0] + "," + root[1] + ")")
-					.style("fill", "#93cc2e");
+//					.style("fill", "#93cc2e")
+					.style("fill", leftSlopeScale(temp[date][city]))
+					.style("opacity",1);
 			}
 
 			function cloud1(root) {
-				d3.select(".canvas")
+				d3.select("svg.canvas")
 					.append("path")
 					.attr("class", "cloud")
 					.attr("id", "c" + root[2])
@@ -516,30 +561,18 @@
 					.style("fill", "#fafafa");
 			}
 
-
-
-
-
-			// cityDropdown.onclick = function() {
-			// 	console.log(cityDropdown.value);
-			// 	drawFarTree(cityDropdown.value);
-			// }
-
 			function myFunction() {
 				document.getElementById("myDropdown").classList.toggle("show");
 			}
 
-
 			window.onclick = function(event) {
-				if (!event.target.matches('.dropbtn')) {
-
+				if (!event.target.matches('.dropbtn') && !event.target.matches('.dropdown-content')) {
 					var dropdowns = document.getElementsByClassName("dropdown-content");
 					//console.log(dropdowns)
 					var i;
 					for (i = 0; i < dropdowns.length; i++) {
 						var openDropdown = dropdowns[i];
 						if (openDropdown.classList.contains('show')) {
-							console.log(i)
 							openDropdown.classList.remove('show');
 						}
 					}
