@@ -256,15 +256,24 @@
 				drawBackground("San Francisco",0,temp);
 
 				cityDropdown.onchange = function() {
-//					console.log(cityDropdown.value);
+					var leftSlopeScale=d3.scaleQuantize().domain([245,310]).range(["#fafafa","#F95426","#F95426","#F9F047","#D4FC79","#96E6A1","#11D850"]);
+
 					city = cityDropdown.value;
 					updateFarTree(city, humidity);
 					//updateCloseTree(city, date, temp);
-					updateGrass();
-					//updateCloud();
+					updateGrass(0,city);
+					function updateGrass(date,city) {
+						d3.selectAll(".grass")
+							.style("fill",function(){return ""+leftSlopeScale(temp[date][city])});
+					}
+					updateLeftSlope(0,city);
+					function updateLeftSlope(date,city){
+					    d3.select(".leftslope")
+							.style("fill",function(){return ""+leftSlopeScale(temp[date][city])});
+					}
 				};
 				updateCloud("San Francisco",0,wind);
-				function updateCloud(city,day,wind) {
+				function updateCloud(city,date,wind) {
 					var j = initialCloudList[0][0];
 					var k = initialCloudList[1][0];
 
@@ -272,8 +281,8 @@
 						d3.select("#c0")
 							.attr("transform", function() {
 								if (d3.select(this).node().getBoundingClientRect().x < width) {
-									j = j + Number(wind[day][city]);
-									console.log(Number(wind[day][city]));
+									j = j + Number(wind[date][city]);
+//									console.log(Number(wind[date][city]));
 									return "translate(" + j + "," + initialCloudList[0][1] + ")"
 								} else {
 									j = 0;
@@ -283,7 +292,7 @@
 						d3.select("#c1")
 							.attr("transform", function() {
 								if (d3.select(this).node().getBoundingClientRect().x < width) {
-									k = k + Number(wind[day][city]);
+									k = k + Number(wind[date][city]);
 									return "translate(" + k + "," + initialCloudList[1][1] + ")"
 								} else {
 									k = 0;
@@ -297,6 +306,8 @@
 						.on("mouseout",function(){t.restart(loop);});
 
 				function dragEnded() {
+					var leftSlopeScale=d3.scaleQuantize().domain([245,310]).range(["#fafafa","#F95426","#F95426","#F9F047","#D4FC79","#96E6A1","#11D850"]);
+
 					selectedValue = d3.event.x;
 					date = selectedValue;
 				    updateCloseTree(city, date, temp);
@@ -312,6 +323,17 @@
 
 					d3.event.sourceEvent.stopPropagation();
 					t.stop();
+
+					updateLeftSlope(date,city);
+					function updateLeftSlope(date,city){
+					    d3.select(".leftslope")
+							.style("fill",function(){return ""+leftSlopeScale(temp[date][city])});
+					}
+					updateGrass(date,city);
+					function updateGrass(date,city) {
+						d3.selectAll(".grass")
+							.style("fill",function(){return ""+leftSlopeScale(temp[date][city])});
+					}
 				}
 
 				//Draggable circle to represent the current value
@@ -461,10 +483,6 @@
 
 			}
 
-			function updateGrass() {
-
-
-			}
 			var initialCloudList = [];
 			function drawCloud(){
 				for (var c = 0; c < 2; c++) {
