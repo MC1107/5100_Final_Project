@@ -177,6 +177,24 @@
 				  <stop offset="100%" style="stop-color:#2b7d99;stop-opacity:1" />
 				</linearGradient>
 			  </defs>
+				<defs>
+				<linearGradient id="grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+				  <stop offset="0%" style="stop-color:#FAD961;stop-opacity:1" />
+				  <stop offset="100%" style="stop-color:#F76B1C;stop-opacity:1" />
+				</linearGradient>
+			  </defs>
+				<defs>
+				<linearGradient id="grad4" x1="0%" y1="0%" x2="0%" y2="100%">
+				  <stop offset="0%" style="stop-color:#d8d8d8;stop-opacity:1" />
+				  <stop offset="100%" style="stop-color:#f8f8f8;stop-opacity:1" />
+				</linearGradient>
+			  </defs>
+				<defs>
+				<linearGradient id="gradfar" x1="0%" y1="0%" x2="0%" y2="100%">
+				  <stop offset="0%" style="stop-color:#628899;stop-opacity:1" />
+				  <stop offset="100%" style="stop-color:#2b7d99;stop-opacity:1" />
+				</linearGradient>
+			  </defs>
 			</svg>
 		</div>
 
@@ -302,16 +320,26 @@
 
 				drawBackground("San Francisco", 0, temp, humidity, wind);
 
+				var cityTempList=[];
+				function cityTemp(city){
+						temp.forEach(function(d){
+						cityTempList.push(d[city]);
+					});
+						return cityTempList;
+				}
 
 				cityDropdown.onchange = function() {
 					city = cityDropdown.value;
+					var leftSlopeScale=d3.scaleQuantize().domain([Math.min.apply(null,cityTemp(city)),Math.max.apply(null,cityTemp(city))]).range(["#F7F4F4","#ed7c31","#7ed321","#6AB714"]);
+					var rightSlopeScale=d3.scaleQuantize().domain([Math.min.apply(null,cityTemp(city)),Math.max.apply(null,cityTemp(city))]).range(["#F2EEEE","#EEAF31","#7ebe00","#79B306"]);
+					var hillScale=d3.scaleQuantize().domain([Math.min.apply(null,cityTemp(city)),Math.max.apply(null,cityTemp(city))]).range(["4","3","2","1"]);
 					displayFieldSet([humidity, temp, wind, city, date], ["humidity", "temp", "wind", "city", "date"]);
 
 
 
 					updateFarTree(city, humidity);
 					//updateCloseTree(city, date, temp);
-					updateGrass(0, city);
+					updateGrass(0, city,temp);
 
 					function updateGrass(date, city) {
 						d3.selectAll(".grass")
@@ -319,9 +347,9 @@
 								return "" + leftSlopeScale(temp[date][city])
 							});
 					}
-					updateLeftSlope(0, city);
+					updateLeftSlope(0, city,temp);
 
-					function updateLeftSlope(date, city) {
+					function updateLeftSlope(date, city,temp) {
 						d3.select(".leftslope")
 							.style("fill", function() {
 								return "" + leftSlopeScale(temp[date][city])
@@ -332,6 +360,15 @@
 							.on("mouseout", function() {
 								displayTooltip1(temp, date, city, "temperature", 0);
 							});
+					}
+
+					updateRightSlope(0,city,temp);
+					function updateRightSlope(date,city,temp){
+
+					    d3.select(".rightslope")
+							.style("fill",function(){return ""+rightSlopeScale(temp[date][city])});
+					    d3.select(".hill")
+							.style("fill",function(){return "url(#grad"+hillScale(temp[date][city])+")"});
 					}
 				};
 
@@ -378,6 +415,9 @@
 					/* drag effects */
 
 					function dragEnded() {
+					    var leftSlopeScale=d3.scaleQuantize().domain([Math.min.apply(null,cityTemp(city)),Math.max.apply(null,cityTemp(city))]).range(["#F7F4F4","#ed7c31","#7ed321","#6AB714"]);
+						var rightSlopeScale=d3.scaleQuantize().domain([Math.min.apply(null,cityTemp(city)),Math.max.apply(null,cityTemp(city))]).range(["#F2EEEE","#EEAF31","#7ebe00","#79B306"]);
+						var hillScale=d3.scaleQuantize().domain([Math.min.apply(null,cityTemp(city)),Math.max.apply(null,cityTemp(city))]).range(["4","3","2","1"]);
 						selectedValue = d3.event.x;
 						date = selectedValue;
 						//console.log("date" + date)
@@ -386,7 +426,7 @@
 						updateCloseTree(city, date, temp);
 						if (selectedValue < 0)
 							selectedValue = 0;
-						else if (selectedValue > 365)
+						else if (selectedValue > 366)
 							selectedValue = 365;
 
 						NormValue = selectedValue / 365;
@@ -397,9 +437,9 @@
 						d3.event.sourceEvent.stopPropagation();
 						t.stop();
 
-						updateLeftSlope(date, city);
+						updateLeftSlope(date, city,temp);
 
-						function updateLeftSlope(date, city) {
+						function updateLeftSlope(date, city,temp) {
 							d3.select(".leftslope")
 								.style("fill", function() {
 									return "" + leftSlopeScale(temp[date][city])
@@ -411,7 +451,15 @@
 									displayTooltip1(temp, date, city, "temperature", 0);
 								});
 						}
-						updateGrass(date, city);
+						updateRightSlope(date,city,temp);
+
+						function updateRightSlope(date,city,temp){
+							d3.select(".rightslope")
+								.style("fill",function(){return ""+rightSlopeScale(temp[date][city])});
+							d3.select(".hill")
+								.style("fill",function(){return "url(#grad"+hillScale(temp[date][city])+")"});
+						}
+						updateGrass(date, city,temp);
 
 						function updateGrass(date, city) {
 							d3.selectAll(".grass")
@@ -440,16 +488,20 @@
 			}
 
 			function drawBackground(city, date, temp, humidity, wind) {
-
+				var leftSlopeScale=d3.scaleQuantize().domain([245,310]).range(["#F7F4F4","#ed7c31","#7ed321","#6AB714"]);
+				var rightSlopeScale=d3.scaleQuantize().domain([245,310]).range(["#F2EEEE","#EEAF31","#7ebe00","#79B306"]);
 				// draw mountains
 				d3.select("svg.canvas")
 					.append("path")
 					.attr("d", farMount2)
+					.attr("class","farMount2")
 					.attr("transform", "translate(0,403.21) scale(2)")
-					.style("fill", "url(#grad2)");
+					.style("fill", "url(#gradfar)");
+
 				d3.select("svg.canvas")
 					.append("path")
 					.attr("d", farMount1)
+					.attr("class","farMount1")
 					.attr("transform", "translate(0,493.21) scale(2)")
 					.style("fill", "#659999");
 
@@ -461,6 +513,7 @@
 				d3.select("svg.canvas")
 					.append("path")
 					.attr("d", hill1)
+					.attr("class","hill")
 					.attr("transform", "translate(0,553.21) scale(2)")
 					.style("fill", "url(#grad1)");
 
@@ -671,7 +724,7 @@
 			}
 
 			function grass1(root, city, date, temp) {
-				var leftSlopeScale = d3.scaleQuantize().domain([245, 310]).range(["#fafafa", "#F95426", "#F95426", "#F9F047", "#D4FC79", "#96E6A1", "#11D850"]);
+				var leftSlopeScale=d3.scaleQuantize().domain([245,310]).range(["#F7F4F4","#ed7c31","#7ed321","#6AB714"]);
 				d3.select("svg.canvas")
 					.append("path")
 					.attr("class", "grass")
