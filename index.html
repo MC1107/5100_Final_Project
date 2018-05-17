@@ -210,7 +210,7 @@
 			var dl = 0.8; // Length delta (factor)
 			var ar = 0.7; // Randomness
 			var maxDepth = 10;
-			var city = 'New York';
+			var city = 'San Francisco';
 			var date = 0;
 			//			var dateSlider = document.getElementById("myRange");
 			var cityDropdown = document.getElementById("myDropdown");
@@ -238,7 +238,7 @@
 				.style("stroke-width", 6);
 			var valueCircle = sliderContainer.append("circle");
 
-			var leafColors = ["D46A6A", "D46A6A", "55AA55", "88CC88", "116611", "004400", "C3CF68", "FFCF31", "FFC131", "936000", "A2834A", "ECD3A5", "FFEFD2", "FFEFD2"];
+			var leafColors = ["D46A6A", "D46A6A", "55AA55", "55AA55", "116611", "116611", "C3CF68", "C3CF68", "FFC131", "FFC131", "A2834A", "A2834A", "FFEFD2", "FFEFD2"];
 			var treeLocations = [
 				[110, 575],
 				[180, 565],
@@ -269,6 +269,9 @@
 				[865, 875.46, 30]
 			];
 			var farTreeGroup;
+			var leftSlopeScale = d3.scaleQuantize().domain([245, 310]).range(["#fafafa", "#F95426", "#F9F047", "#F9F047", "#D4FC79", "#96E6A1", "#11D850"]);
+			var leafScale = d3.scaleQuantize().domain([245, 310]).range([0.3, 0.7, 1, 2, 4]);
+
 			var div1 = d3.select("body").append("div")
 				.attr("class", "tooltip1")
 				.style("opacity", 0);
@@ -299,10 +302,11 @@
 
 				drawBackground("San Francisco", 0, temp, humidity, wind);
 
+
 				cityDropdown.onchange = function() {
 					city = cityDropdown.value;
 					displayFieldSet([humidity, temp, wind, city, date], ["humidity", "temp", "wind", "city", "date"]);
-					var leftSlopeScale = d3.scaleQuantize().domain([245, 310]).range(["#fafafa", "#F95426", "#F95426", "#F9F047", "#D4FC79", "#96E6A1", "#11D850"]);
+
 
 
 					updateFarTree(city, humidity);
@@ -321,6 +325,12 @@
 						d3.select(".leftslope")
 							.style("fill", function() {
 								return "" + leftSlopeScale(temp[date][city])
+							})
+							.on("mouseover", function() {
+								displayTooltip1(temp, date, city, "temperature", 0.9);
+							})
+							.on("mouseout", function() {
+								displayTooltip1(temp, date, city, "temperature", 0);
 							});
 					}
 				};
@@ -358,20 +368,21 @@
 					d3.selectAll(".cloud")
 						.on("mouseover", function() {
 							t.stop();
-							displayTooltip1(wind, "wind speed", 0.9);
+							displayTooltip1(wind, date, city, "wind speed", 0.9);
 						})
 						.on("mouseout", function() {
 							t.restart(loop);
-							displayTooltip1(wind, "wind speed", 0);
+							displayTooltip1(wind, date, city, "wind speed", 0);
 						});
 
+					/* drag effects */
+
 					function dragEnded() {
-						displayFieldSet([humidity, temp, wind, city, date], ["humidity", "temp", "wind", "city", "date"]);
-
-						var leftSlopeScale = d3.scaleQuantize().domain([245, 310]).range(["#fafafa", "#F95426", "#F95426", "#F9F047", "#D4FC79", "#96E6A1", "#11D850"]);
-
 						selectedValue = d3.event.x;
 						date = selectedValue;
+						//console.log("date" + date)
+						displayFieldSet([humidity, temp, wind, city, date], ["humidity", "temp", "wind", "city", "date"]);
+
 						updateCloseTree(city, date, temp);
 						if (selectedValue < 0)
 							selectedValue = 0;
@@ -393,6 +404,12 @@
 								.style("fill", function() {
 									return "" + leftSlopeScale(temp[date][city])
 								})
+								.on("mouseover", function() {
+									displayTooltip1(temp, date, city, "temperature", 0.9);
+								})
+								.on("mouseout", function() {
+									displayTooltip1(temp, date, city, "temperature", 0);
+								});
 						}
 						updateGrass(date, city);
 
@@ -423,7 +440,7 @@
 			}
 
 			function drawBackground(city, date, temp, humidity, wind) {
-				var leftSlopeScale = d3.scaleQuantize().domain([245, 310]).range(["#fafafa", "#F95426", "#F95426", "#F9F047", "#D4FC79", "#96E6A1", "#11D850"]);
+
 				// draw mountains
 				d3.select("svg.canvas")
 					.append("path")
@@ -477,12 +494,12 @@
 					.attr('id', function(d) {
 						return 'id-' + d.i;
 					})
-					.on("mouseover", function() {
-						displayTooltip1(temp, "temperature", 0.9);
-					})
-					.on("mouseout", function() {
-						displayTooltip1(temp, "temperature", 0);
-					});
+				// .on("mouseover", function() {
+				// 	displayTooltip1(temp, date, city, "temperature", 0.9);
+				// })
+				// .on("mouseout", function() {
+				// 	displayTooltip1(temp, date, city, "temperature", 0);
+				// });
 
 				// draw grasses
 				for (var i = 0; i < grassLocations.length; i++) {
@@ -501,16 +518,16 @@
 					.attr("transform", "translate(0,753.46) scale(2)")
 					//					.style("fill", "#7ed321");
 					.style("fill", leftSlopeScale(temp[date][city]))
-					.on("mouseover", function() {
-						displayTooltip1(temp, "temperature", 0.9);
-					})
-					.on("mouseout", function() {
-						displayTooltip1(temp, "temperature", 0);
-					});;
+				// .on("mouseover", function() {
+				// 	displayTooltip1(temp, date, city, "temperature", 0.9);
+				// })
+				// .on("mouseout", function() {
+				// 	displayTooltip1(temp, date, city, "temperature", 0);
+				// });
 			}
 
 			function updateCloseTree(city, date, temp) {
-				var leafScale = d3.scaleQuantize().domain([245, 310]).range([0.3, 0.7, 1, 2, 4]);
+
 				// change the leaf size and color according to the temperature level for each city
 				//				console.log(date);
 				var currentCircles = d3.select("#tree1").selectAll("circle").data(branches);
@@ -534,15 +551,20 @@
 							return "green";
 						}
 					})
-					.style("opacity", temp[date][city] / 303);
+					.style("opacity", temp[date][city] / 303)
+					.on("mouseover", function() {
+						displayTooltip1(temp, date, city, "temperature", 0.9);
+					})
+					.on("mouseout", function() {
+						displayTooltip1(temp, date, city, "temperature", 0);
+					});;
 
 
 			}
 
 			function updateFarTree(city, humidity) {
 				// change number of trees according to different humidity level in different cities
-				var num = Math.ceil(humidity[0][city] / 10);
-				console.log(num);
+				var val = humidity[0][city]
 
 				for (var i = 0; i < 15; i++) {
 					d3.select("#farTree" + i)
@@ -550,11 +572,11 @@
 						.attr("opacity", 1)
 				}
 
-				for (var i = 0; i < 15 - num; i++) {
-					removeNum = Math.floor(Math.random() * 10);
+				for (var i = 0; i < 15 - (val * 2 / 10); i++) {
+					removeNum = Math.floor(Math.random() * 15);
 					d3.select("#farTree" + removeNum)
 						.selectAll('path')
-						.attr("opacity", 0)
+						.attr("opacity", 0);
 				}
 
 
@@ -631,11 +653,12 @@
 					.attr("class", "fartree")
 					.attr("id", "farTree" + id)
 					.on("mouseover", function() {
-						displayTooltip1(humidity, "humidity", 0.9);
+						displayTooltip2(humidity, city, "humidity", 0.9);
 					})
 					.on("mouseout", function() {
-						displayTooltip1(humidity, "humidity", 0);
-					});;
+						displayTooltip2(humidity, city, "humidity", 0);
+					});
+
 				farTreeGroup
 					.append("path")
 					.attr("d", "M " + root[0] + " " + root[1] + " L " + root[0] + " " + (root[1] - 10))
@@ -687,9 +710,25 @@
 				}
 			}
 
-			function displayTooltip1(data, type, opacity) {
+			function displayTooltip1(data, date, city, type, opacity) {
 				console.log(data[date][city])
 				val = Math.round(data[date][city] * 100) / 100
+				div1.transition()
+					.duration(200)
+					.style("opacity", opacity);
+				div1.html(type + ": " + val)
+					.style("left", (d3.event.pageX) + "px")
+					.style("top", (d3.event.pageY - 28) + "px");
+			}
+
+			function displayTooltip2(data, city, type, opacity) {
+				//console.log(data[date][city])
+				// val = 0
+				// for (var i = 0; i < data.length; i++) {
+				// 	val = val + data[i][city]
+				// }
+				// val = Math.round((val / data.length) * 100) / 100
+				var val = Math.round(data[0][city] * 100) / 100
 				div1.transition()
 					.duration(200)
 					.style("opacity", opacity);
